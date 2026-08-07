@@ -213,7 +213,7 @@ public class ChaosController : ControllerBase
             return false;
         }
 
-        var user = await _userManager.GetUserByIdAsync(userId).ConfigureAwait(false);
+        var user = _userManager.GetUserById(userId);
 
         if (user is null)
         {
