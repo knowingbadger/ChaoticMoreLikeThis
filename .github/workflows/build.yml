@@ -1,1 +1,61 @@
+name: Build Chaotic More Like This
 
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "**.cs"
+      - "**.csproj"
+      - "**.html"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout plugin source
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - name: Checkout Jellyfin source
+        uses: actions/checkout@v4
+        with:
+          repository: jellyfin/jellyfin
+          ref: v10.11.11
+          path: jellyfin
+          fetch-depth: 1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Show Jellyfin project paths for debugging
+        run: |
+          echo "Looking for Jellyfin project files..."
+          find jellyfin -maxdepth 2 -name "*.csproj" | sort || true
+
+      - name: Restore plugin
+        run: dotnet restore plugin/ChaoticMoreLikeThis.Source.csproj
+
+      - name: Build plugin
+        run: dotnet build plugin/ChaoticMoreLikeThis.Source.csproj -c Release --no-restore
+
+      - name: Prepare artifact folder
+        run: |
+          mkdir -p artifact/ChaoticMoreLikeThis
+          cp plugin/bin/Release/net9.0/ChaoticMoreLikeThis.dll artifact/ChaoticMoreLikeThis/
+          if [ -f plugin/meta.json ]; then cp plugin/meta.json artifact/ChaoticMoreLikeThis/; fi
+          if [ -f plugin/README.md ]; then cp plugin/README.md artifact/ChaoticMoreLikeThis/; fi
+          cd artifact
+          zip -r ChaoticMoreLikeThis.zip ChaoticMoreLikeThis
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChaoticMoreLikeThis
+          path: artifact/ChaoticMoreLikeThis.zip
