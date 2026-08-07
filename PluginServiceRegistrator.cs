@@ -1,4 +1,5 @@
-using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common;
+using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +9,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
 {
     public void RegisterServices(
         IServiceCollection serviceCollection,
-        IApplicationPaths applicationPaths)
+        IServerApplicationHost applicationHost)
     {
         serviceCollection.AddSingleton<ChaosSettingsStore>();
         serviceCollection.AddSingleton<ChaosStateService>();
