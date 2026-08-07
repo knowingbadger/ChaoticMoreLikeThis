@@ -220,6 +220,6 @@ public class ChaosController : ControllerBase
             return false;
         }
 
-        return user.HasPermission(PermissionKind.IsAdministrator);
+        return user.Policy.IsAdministrator;
     }
 }
