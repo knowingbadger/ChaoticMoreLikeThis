@@ -51,11 +51,9 @@ jobs:
           cp plugin/bin/Release/net9.0/ChaoticMoreLikeThis.dll artifact/ChaoticMoreLikeThis/
           if [ -f plugin/meta.json ]; then cp plugin/meta.json artifact/ChaoticMoreLikeThis/; fi
           if [ -f plugin/README.md ]; then cp plugin/README.md artifact/ChaoticMoreLikeThis/; fi
-          cd artifact
-          zip -r ChaoticMoreLikeThis.zip ChaoticMoreLikeThis
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ChaoticMoreLikeThis
-          path: artifact/ChaoticMoreLikeThis.zip
+          path: artifact/ChaoticMoreLikeThis
