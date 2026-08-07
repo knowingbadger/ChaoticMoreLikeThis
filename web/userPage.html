@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chaotic More Like This</title>
+</head>
+<body>
+<div data-role="page" class="page type-interior pluginConfigurationPage">
+    <div data-role="content">
+        <h1>Chaotic More Like This</h1>
+
+        <div id="status" style="margin-bottom: 12px;"></div>
+
+        <label>
+            <input type="checkbox" id="chaosToggle" />
+            Enable chaos for my account
+        </label>
+
+        <p id="description"></p>
+    </div>
+
+    <script>
+        (function () {
+            var status = document.getElementById("status");
+            var toggle = document.getElementById("chaosToggle");
+            var description = document.getElementById("description");
+
+            function apiUrl(path) {
+                if (window.ApiClient && typeof ApiClient.getUrl === "function") {
+                    return ApiClient.getUrl(path);
+                }
+
+                return window.location.origin + "/" + path;
+            }
+
+            function authToken() {
+                if (window.ApiClient && typeof ApiClient.accessToken === "function") {
+                    return ApiClient.accessToken();
+                }
+
+                return "";
+            }
+
+            function headers() {
+                return {
+                    "Content-Type": "application/json",
+                    "Authorization": "MediaBrowser Token=\"" + authToken() + "\""
+                };
+            }
+
+            function setStatus(message) {
+                status.textContent = message;
+            }
+
+            function loadConfig() {
+                setStatus("Loading your chaos setting...");
+
+                fetch(apiUrl("ChaoticMoreLikeThis/UserConfig"), {
+                    method: "GET",
+                    headers: headers()
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status);
+                    }
+
+                    return response.json();
+                })
+                .then(function (config) {
+                    toggle.checked = config.enabled;
+                    toggle.disabled = !config.userToggleAllowed;
+
+                    if (!config.masterEnabled) {
+                        description.textContent = "The server administrator has disabled chaos globally.";
+                    } else if (config.adminForced) {
+                        description.textContent = "The server administrator has forced chaos for all users.";
+                    } else if (!config.userToggleAllowed) {
+                        description.textContent = "The server administrator controls this setting.";
+                    } else {
+                        description.textContent = "This preference is stored for your user account.";
+                    }
+
+                    setStatus("Loaded.");
+                })
+                .catch(function (error) {
+                    setStatus("Failed to load setting: " + error.message);
+                });
+            }
+
+            toggle.addEventListener("change", function () {
+                setStatus("Saving your chaos setting...");
+
+                fetch(apiUrl("ChaoticMoreLikeThis/UserConfig"), {
+                    method: "POST",
+                    headers: headers(),
+                    body: JSON.stringify({
+                        enabled: toggle.checked
+                    })
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        return response.text().then(function (text) {
+                            throw new Error(text || "HTTP " + response.status);
+                        });
+                    }
+
+                    setStatus("Saved.");
+                })
+                .catch(function (error) {
+                    setStatus("Failed to save setting: " + error.message);
+                    loadConfig();
+                });
+            });
+
+            function ready() {
+                if (window.ApiClient) {
+                    loadConfig();
+                } else {
+                    setTimeout(ready, 250);
+                }
+            }
+
+            ready();
+        })();
+    </script>
+</div>
+</body>
+</html>

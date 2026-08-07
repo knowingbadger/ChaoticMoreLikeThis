@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chaotic More Like This - Admin</title>
+</head>
+<body>
+<div data-role="page" class="page type-interior pluginConfigurationPage">
+    <div data-role="content">
+        <h1>Chaotic More Like This - Admin</h1>
+
+        <div id="status" style="margin-bottom: 12px;"></div>
+
+        <p>
+            Warning: applying chaos tags modifies library metadata serverwide.
+            Use cleanup if you want to remove plugin tags.
+        </p>
+
+        <textarea id="configJson" style="width: 100%; height: 420px; font-family: monospace;"></textarea>
+
+        <div style="margin-top: 12px;">
+            <button id="saveButton">Save</button>
+            <button id="applyButton">Apply Now</button>
+            <button id="cleanupButton">Cleanup Now</button>
+            <button id="reloadButton">Reload</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var status = document.getElementById("status");
+            var textarea = document.getElementById("configJson");
+
+            function apiUrl(path) {
+                if (window.ApiClient && typeof ApiClient.getUrl === "function") {
+                    return ApiClient.getUrl(path);
+                }
+
+                return window.location.origin + "/" + path;
+            }
+
+            function authToken() {
+                if (window.ApiClient && typeof ApiClient.accessToken === "function") {
+                    return ApiClient.accessToken();
+                }
+
+                return "";
+            }
+
+            function headers() {
+                return {
+                    "Content-Type": "application/json",
+                    "Authorization": "MediaBrowser Token=\"" + authToken() + "\""
+                };
+            }
+
+            function setStatus(message) {
+                status.textContent = message;
+            }
+
+            function loadConfig() {
+                setStatus("Loading admin settings...");
+
+                fetch(apiUrl("ChaoticMoreLikeThis/AdminConfig"), {
+                    method: "GET",
+                    headers: headers()
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status);
+                    }
+
+                    return response.json();
+                })
+                .then(function (config) {
+                    textarea.value = JSON.stringify(config, null, 2);
+                    setStatus("Loaded.");
+                })
+                .catch(function (error) {
+                    setStatus("Failed to load config: " + error.message);
+                });
+            }
+
+            function saveConfig() {
+                var parsed;
+
+                try {
+                    parsed = JSON.parse(textarea.value);
+                } catch (error) {
+                    setStatus("Invalid JSON: " + error.message);
+                    return;
+                }
+
+                setStatus("Saving admin settings...");
+
+                fetch(apiUrl("ChaoticMoreLikeThis/AdminConfig"), {
+                    method: "POST",
+                    headers: headers(),
+                    body: JSON.stringify(parsed)
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status);
+                    }
+
+                    setStatus("Saved.");
+                })
+                .catch(function (error) {
+                    setStatus("Failed to save config: " + error.message);
+                });
+            }
+
+            function applyNow() {
+                setStatus("Starting apply task...");
+
+                fetch(apiUrl("ChaoticMoreLikeThis/Apply"), {
+                    method: "POST",
+                    headers: headers()
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status);
+                    }
+
+                    setStatus("Apply started in background.");
+                })
+                .catch(function (error) {
+                    setStatus("Failed to start apply: " + error.message);
+                });
+            }
+
+            function cleanupNow() {
+                setStatus("Starting cleanup task...");
+
+                fetch(apiUrl("ChaoticMoreLikeThis/Cleanup"), {
+                    method: "POST",
+                    headers: headers()
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status);
+                    }
+
+                    setStatus("Cleanup started in background.");
+                })
+                .catch(function (error) {
+                    setStatus("Failed to start cleanup: " + error.message);
+                });
+            }
+
+            document.getElementById("saveButton").addEventListener("click", saveConfig);
+            document.getElementById("applyButton").addEventListener("click", applyNow);
+            document.getElementById("cleanupButton").addEventListener("click", cleanupNow);
+            document.getElementById("reloadButton").addEventListener("click", loadConfig);
+
+            function ready() {
+                if (window.ApiClient) {
+                    loadConfig();
+                } else {
+                    setTimeout(ready, 250);
+                }
+            }
+
+            ready();
+        })();
+    </script>
+</div>
+</body>
+</html>
