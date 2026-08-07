@@ -213,13 +213,8 @@ public class ChaosController : ControllerBase
             return false;
         }
 
-        var user = _userManager.GetUserById(userId);
-
-        if (user is null)
-        {
-            return false;
-        }
-
-        return user.HasPermission(PermissionKind.IsAdministrator);
+        return User?.IsInRole("Administrator") == true
+            || User?.IsInRole("Admin") == true
+            || User?.HasClaim(ClaimTypes.Role, "Administrator") == true;
     }
 }
