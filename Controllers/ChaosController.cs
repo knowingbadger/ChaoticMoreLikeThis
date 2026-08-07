@@ -1,10 +1,7 @@
 using System;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,45 +15,32 @@ public class ChaosController : ControllerBase
     private readonly ChaosSettingsStore _store;
     private readonly ChaosStateService _state;
     private readonly ChaosTagService _tagService;
-    private readonly IUserManager _userManager;
     private readonly ILogger<ChaosController> _logger;
 
     public ChaosController(
         ChaosSettingsStore store,
         ChaosStateService state,
         ChaosTagService tagService,
-        IUserManager userManager,
         ILogger<ChaosController> logger)
     {
         _store = store;
         _state = state;
         _tagService = tagService;
-        _userManager = userManager;
         _logger = logger;
     }
 
     [HttpGet("AdminConfig")]
-    [Authorize]
+    [Authorize(Policy = "RequiresElevation")]
     public async Task<IActionResult> GetAdminConfig()
     {
-        if (!await IsAdminAsync().ConfigureAwait(false))
-        {
-            return Unauthorized();
-        }
-
         var settings = await _store.GetAdminSettingsAsync().ConfigureAwait(false);
         return Ok(settings);
     }
 
     [HttpPost("AdminConfig")]
-    [Authorize]
+    [Authorize(Policy = "RequiresElevation")]
     public async Task<IActionResult> SetAdminConfig([FromBody] AdminChaosSettings settings)
     {
-        if (!await IsAdminAsync().ConfigureAwait(false))
-        {
-            return Unauthorized();
-        }
-
         await _store.SaveAdminSettingsAsync(settings).ConfigureAwait(false);
         return NoContent();
     }
@@ -104,44 +88,28 @@ public class ChaosController : ControllerBase
 
         if (!admin.AllowUserToggle)
         {
-            return Conflict(new
-            {
-                error = "User toggles are disabled by the administrator."
-            });
+            return Conflict(new { error = "User toggles are disabled by the administrator." });
         }
 
         if (admin.ForceEnabledForAllUsers)
         {
-            return Conflict(new
-            {
-                error = "The administrator has forced chaos for all users."
-            });
+            return Conflict(new { error = "The administrator has forced chaos for all users." });
         }
 
         var settings = await _store.GetUserSettingsAsync(userId).ConfigureAwait(false);
 
-        settings ??= new UserChaosSettings
-        {
-            UserId = userId
-        };
-
+        settings ??= new UserChaosSettings { UserId = userId };
         settings.Enabled = request.Enabled;
         settings.UpdatedAt = DateTime.UtcNow;
 
         await _store.SaveUserSettingsAsync(settings).ConfigureAwait(false);
-
         return NoContent();
     }
 
     [HttpPost("Apply")]
-    [Authorize]
-    public async Task<IActionResult> Apply()
+    [Authorize(Policy = "RequiresElevation")]
+    public IActionResult Apply()
     {
-        if (!await IsAdminAsync().ConfigureAwait(false))
-        {
-            return Unauthorized();
-        }
-
         _ = Task.Run(async () =>
         {
             try
@@ -158,14 +126,9 @@ public class ChaosController : ControllerBase
     }
 
     [HttpPost("Cleanup")]
-    [Authorize]
-    public async Task<IActionResult> Cleanup()
+    [Authorize(Policy = "RequiresElevation")]
+    public IActionResult Cleanup()
     {
-        if (!await IsAdminAsync().ConfigureAwait(false))
-        {
-            return Unauthorized();
-        }
-
         _ = Task.Run(async () =>
         {
             try
@@ -192,7 +155,9 @@ public class ChaosController : ControllerBase
 
         foreach (var claim in claims)
         {
-            if (claim.Type == ClaimTypes.NameIdentifier || claim.Type == "sub")
+            if (claim.Type == ClaimTypes.NameIdentifier
+                || claim.Type == "sub"
+                || claim.Type == "UserId")
             {
                 if (Guid.TryParse(claim.Value, out var userId))
                 {
@@ -202,19 +167,5 @@ public class ChaosController : ControllerBase
         }
 
         return Guid.Empty;
-    }
-
-    private async Task<bool> IsAdminAsync()
-    {
-        var userId = GetCurrentUserId();
-
-        if (userId == Guid.Empty)
-        {
-            return false;
-        }
-
-        return User?.IsInRole("Administrator") == true
-            || User?.IsInRole("Admin") == true
-            || User?.HasClaim(ClaimTypes.Role, "Administrator") == true;
     }
 }
