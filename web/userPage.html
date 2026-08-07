@@ -43,7 +43,7 @@
             function headers() {
                 return {
                     "Content-Type": "application/json",
-                    "Authorization": "MediaBrowser Token=\"" + authToken() + "\""
+                    "X-Emby-Token": authToken()
                 };
             }
 
