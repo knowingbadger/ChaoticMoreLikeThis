@@ -1,0 +1,12 @@
+{
+  "category": "Library",
+  "changelog": "Initial foundation for serverwide deterministic chaos tags.",
+  "description": "Adds deterministic chaotic similarity tags and per-user preference storage.",
+  "id": "6F9E6C2E-3C3B-4A5D-9C0B-2E4D6E5A7C91",
+  "name": "Chaotic More Like This",
+  "overview": "Makes More Like This wildly inaccurate in a controlled, deterministic way.",
+  "owner": "Local",
+  "targetAbi": "10.11.11.0",
+  "timestamp": "2026-08-07T00:00:00Z",
+  "version": "1.0.0.0"
+}
