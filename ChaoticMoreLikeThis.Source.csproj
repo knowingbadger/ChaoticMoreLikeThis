@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ChaoticMoreLikeThis</AssemblyName>
+    <RootNamespace>Jellyfin.Plugin.ChaoticMoreLikeThis</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      These paths assume GitHub Actions checks out:
+        your plugin into ./plugin
+        Jellyfin source into ./jellyfin
+
+      The workflow below does that.
+    -->
+    <ProjectReference Include="../jellyfin/MediaBrowser.Controller/MediaBrowser.Controller.csproj" />
+    <ProjectReference Include="../jellyfin/MediaBrowser.Model/MediaBrowser.Model.csproj" />
+    <ProjectReference Include="../jellyfin/Jellyfin.Data/Jellyfin.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="web\adminPage.html" />
+    <EmbeddedResource Include="web\userPage.html" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ChaoticMoreLikeThis</AssemblyName>
+    <RootNamespace>Jellyfin.Plugin.ChaoticMoreLikeThis</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      These may or may not exist on NuGet for your exact Jellyfin version.
+      If GitHub Actions fails because these packages cannot be found,
+      use the GitHub source-build method shown later.
+    -->
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.11" />
+    <PackageReference Include="Jellyfin.Model" Version="10.11.11" />
+    <PackageReference Include="Jellyfin.Data" Version="10.11.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="web\adminPage.html" />
+    <EmbeddedResource Include="web\userPage.html" />
+  </ItemGroup>
+
+</Project>
